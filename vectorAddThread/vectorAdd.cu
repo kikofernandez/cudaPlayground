@@ -22,7 +22,7 @@ int main( void ){
   // fill the array a and b on the CPU
   for(int i=0; i<N; i++){
     a[i] = i;
-    b[i] = i*i;	
+    b[i] = i;	
   }
   
   // Copy the arrays a and b into GPU
@@ -36,14 +36,16 @@ int main( void ){
   
   // Verification
   bool success = true;
+  int result = 0;
   for(int i=0; i<N; i++){
     if((a[i] + b[i]) != c[i]){
       printf("Error: %d + %d = %d\n", a[i], b[i], c[i]);
       success = false;
     }	
+    result += c[i];
   }
   
-  if(success) printf("We did it!!!\n");
+  if(success) printf("We did it!!! %d\n", result);
   
   // Free memory
   cudaFree(dev_a);
