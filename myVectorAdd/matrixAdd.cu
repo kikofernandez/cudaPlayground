@@ -2,21 +2,9 @@
 
 #include <iostream>
 
-#define N (5)
+#define N (70)
 #define NBlocks 64
 //#define NThreads 32
-
-
-//void initMatrixes(int *a, int *b){
-//	int i;
-//	int j;
-//	for(i=0; i < N; i++){
-//		for(j=0; j<N; j++){
-//			a[i*N + j] = i;
-//			b[i*N + j] = i;
-//		}
-//	}
-//}
 
 __global__ void kernel(int *a, int *b, int *c){
 	// These ones will compute elements from [0..2047][0..2047]
@@ -24,7 +12,7 @@ __global__ void kernel(int *a, int *b, int *c){
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 
 	// We want to be able to compute as well data between [2047..X]
-	while(x < N && y < N){
+	while((x < N) && (y < N)){
 		c[x+y*N] = a[x+y*N] + b[x+y*N];
 		x += blockDim.x * gridDim.x;
 		y += blockDim.x * gridDim.y;
@@ -56,8 +44,8 @@ int main( void ){
 	//initMatrixes(&a[0][0], &b[0][0]);
 	for(i=0; i<N; i++){
 		for(int j=0; j<N; j++){
-			a[i*N+j] = i;
-			b[i*N+j] = i;
+			a[i*N+j] = i+j;
+			b[i*N+j] = i+j;
 		}
 	}
 
@@ -67,19 +55,20 @@ int main( void ){
 	cuda_ret = cudaMemcpy(d_b, b, sizeof(int) * N * N, cudaMemcpyHostToDevice);
 	if(cuda_ret != cudaSuccess) printf("Unable to allocate device memory");
 
-	dim3 threads(32, 32);
+	//dim3 threads(32, 32);
+	dim3 threads(N, N);
 	// Process data in GPU
-	kernel<<<NBlocks,threads>>>(d_a, d_b, d_c);
-
+	kernel<<<1,threads>>>(d_a, d_b, d_c);
+		
 	// Data to Mem CPU
 	cudaMemcpy(c, d_c, sizeof(int) * N * N, cudaMemcpyDeviceToHost);
-
+	
 	int j;
 	for(i=0; i < N; i++){
 		result = 0;
 		for(j=0; j<N; j++){
-			result += c[i+j];
-			printf("%d,", a[i+j]);
+			result += c[i*N+j];
+			printf("%d,", c[i*N+j]);
 		}
 		printf("----> %d", result);
 		printf("\n");
