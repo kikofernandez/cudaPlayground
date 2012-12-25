@@ -3,7 +3,7 @@
 #include <iostream>
 
 #define N (20)
-#define NBlocks 1
+#define NBlocks 2
 #define NThreads 10 // rows
 
 __global__ void kernel(int *a, int *b, int *c){
@@ -12,14 +12,18 @@ __global__ void kernel(int *a, int *b, int *c){
 	int y = threadIdx.y + blockIdx.y * blockDim.y; // [0..19]
 
 	// We want to be able to compute as well data between [2047..X]
-//	while((x < N) && (y < N)){
-//		c[x+y*NThreads] = a[x+y*NThreads] + b[x+y*NThreads]; ;
-//		x += blockDim.x * gridDim.x;
-//		y += blockDim.x * gridDim.y;
-//	}
-	if(x<N && y<N){
-		c[x+y*NThreads] = a[x+y*NThreads] + b[x+y*NThreads];
+	while((x < N) && (y < N)){
+		c[x*N+y] = a[x*N+y] + b[x*N+y];
+		x += NThreads;
+		y += NThreads;
+		//x += blockDim.x * N;
+		//y += blockDim.x * N;
 	}
+//	if(x<N && y<N){
+//		c[x] = 0;//;a[y] + b[y];
+//		c[y] = 1;
+//		//c[x+]
+//	}
 }
 
 int main( void ){
@@ -59,6 +63,8 @@ int main( void ){
 		printf("\n");
 	}
 
+	printf("\n\n\n");
+
 	// Copy values to the GPU
 	cuda_ret = cudaMemcpy(d_a, a, sizeof(int) * N * N, cudaMemcpyHostToDevice);
 	if(cuda_ret != cudaSuccess) printf("Unable to allocate device memory");
@@ -74,17 +80,11 @@ int main( void ){
 	
 	int j;
 	for(i=0; i < N; i++){
-		result = 0;
 		for(j=0; j<N; j++){
-			result += c[i*N+j];
-			printf("%d,", c[i*N+j]);
+			printf("%d,", c[i+j*N]);
 		}
-		printf("----> %d", result);
 		printf("\n");
 	}
-
-//	// Print success
-	printf("Result by row: %d\n", result);
 
 	// Free memory
 	cudaFree(d_a);
