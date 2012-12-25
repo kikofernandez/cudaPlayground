@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#define N (10)
+#define N (20)
 #define NBlocks 1
 #define NThreads 10 // rows
 
