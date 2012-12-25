@@ -4,7 +4,7 @@
 
 #define N (20)
 #define NBlocks 2
-#define NThreads 10 // rows
+#define NThreads 5 // rows
 
 __global__ void kernel(int *a, int *b, int *c){
 	// These ones will compute elements from [0..2047][0..2047]
@@ -13,9 +13,9 @@ __global__ void kernel(int *a, int *b, int *c){
 
 	// We want to be able to compute as well data between [2047..X]
 	while((x < N) && (y < N)){
-		c[x*N+y] = a[x*N+y] + b[x*N+y];
-		x += NThreads;
-		y += NThreads;
+		c[x*NThreads+y] = a[x*NThreads+y] + b[x*NThreads+y];
+		x += NThreads*NBlocks;
+		//y += NThreads;
 		//x += blockDim.x * N;
 		//y += blockDim.x * N;
 	}
@@ -51,14 +51,14 @@ int main( void ){
 	//initMatrixes(&a[0][0], &b[0][0]);
 	for(i=0; i<N; i++){
 		for(int j=0; j<N; j++){
-			a[i*N+j] = 1;
-			b[i*N+j] = 2;
+			a[i*N+j] = i*N+j;
+			b[i*N+j] = 0;
 		}
 	}
 
 	for(i=0; i<N; i++){
 		for(int j=0; j<N; j++){
-			printf("%d", a[i+j*N]+b[i+j*N]);
+			printf("%d,", a[i+j*N]+b[i+j*N]);
 		}
 		printf("\n");
 	}
@@ -81,7 +81,7 @@ int main( void ){
 	int j;
 	for(i=0; i < N; i++){
 		for(j=0; j<N; j++){
-			printf("%d,", c[i+j*N]);
+			printf("%d,", c[i*N+j]);
 		}
 		printf("\n");
 	}
