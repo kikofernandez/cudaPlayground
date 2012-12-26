@@ -1,6 +1,7 @@
 // Square Matrix addition
 
 #include <iostream>
+#include <math.h>
 
 #define N (20)
 #define NBlocks 2
@@ -10,20 +11,23 @@ __global__ void kernel(int *a, int *b, int *c){
 	// These ones will compute elements from [0..2047][0..2047]
 	int x = threadIdx.x + blockIdx.x * blockDim.x; // [0..19]
 	int y = threadIdx.y + blockIdx.y * blockDim.y; // [0..19]
+	int round = 0;
+	int offset_row = 0;
+	int number_total_blocks_per_row = (N+NBlocks*NThreads)/(NBlocks*NThreads); // 2
+	int loops = 0;
 
 	// We want to be able to compute as well data between [2047..X]
-	while((x < N) && (y < N)){
-		c[x*NThreads+y] = a[x*NThreads+y] + b[x*NThreads+y];
-		x += NThreads*NBlocks;
-		//y += NThreads;
-		//x += blockDim.x * N;
-		//y += blockDim.x * N;
+	while(loops < (N/NThreads)){ // 0 < 4, 1 < 4
+		round = 0;
+		offset_row = (NThreads*NBlocks*NThreads)*(number_total_blocks_per_row)*round; // 100*0, 100*1
+		while(round < number_total_blocks_per_row){ // rows ,,,,0<2
+			int offset_col = (NThreads*NBlocks*NThreads)*round; // 50*0,50| 50*0, 50*1
+			//c[x*NThreads+y+offset_col+offset_row]; // 4,54| 0+4+0+100,0+4+50+100
+			c[x*NThreads+y+offset_col+offset_row] = a[x*NThreads+y+offset_col+offset_row] + b[x*NThreads+y+offset_col+offset_row];
+			round++;
+		}
+		loops += 1; // 1,
 	}
-//	if(x<N && y<N){
-//		c[x] = 0;//;a[y] + b[y];
-//		c[y] = 1;
-//		//c[x+]
-//	}
 }
 
 int main( void ){
